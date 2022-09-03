@@ -53,18 +53,23 @@ def main(args):
             transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         ])
     }
-
+#     print(os.listdir(os.path.join(args.data_root, 't256')))
+#     print(os.path.join(args.data_root, 't256'))
     train_datasets = datasets.ImageFolder(os.path.join(args.data_root, 't256'), data_transforms['train'])
+    print("shape of the training sample:", train_datasets[0][0].shape)
+    print(train_datasets[0][1])
     val_datasets   = datasets.ImageFolder(os.path.join(args.data_root, 'v256'), data_transforms['val'])
     train_dataloaders = torch.utils.data.DataLoader(train_datasets, batch_size=args.batch_size*len(gpus), shuffle=True, num_workers=8)
     val_dataloaders   = torch.utils.data.DataLoader(val_datasets, batch_size=1024, shuffle=False, num_workers=8)
 
     if args.debug:
         x, y =next(iter(train_dataloaders))
+        print(y)
         logger.append([x, y])
 
     os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
     is_use_cuda = torch.cuda.is_available()
+    print("is_use_cuda:", is_use_cuda)
     cudnn.benchmark = True
 
     if  'resnet50' == args.model.split('_')[0]:
@@ -88,7 +93,7 @@ def main(args):
 
     metric = [ClassErrorMeter([1,5], True)]
     start_epoch = 0
-    num_epochs  = 90
+    num_epochs  = 3
 
     my_trainer = Trainer(my_model, args.model, loss_fn, optimizer, lr_schedule, 500, is_use_cuda, train_dataloaders, \
                         val_dataloaders, metric, start_epoch, num_epochs, args.debug, logger, writer)

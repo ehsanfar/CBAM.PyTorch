@@ -56,6 +56,7 @@ class Trainer():
         self.logger.append('------------------------------------------------------------')
 
     def _train(self):
+        print("is_use_cuda in Trainer:", self.is_use_cuda)
         self.model.train()  # Set model to training mode
         losses = []
         if self.metric is not None:
@@ -89,6 +90,7 @@ class Trainer():
                     print_str += '@Top-1 Score: %.4f\t' % (top1_acc_score)
                     print_str += '@Top-5 Score: %.4f\t' % (top5_acc_score)
                 self.logger.append(print_str)
+
         self.writer.add_scalar('loss/loss_c', batch_mean_loss, self.cur_epoch)
 
     def _valid(self):

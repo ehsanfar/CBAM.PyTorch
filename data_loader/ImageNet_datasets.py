@@ -26,6 +26,7 @@ class ImageNetData(data.Dataset):
         self.root = img_root
 
         self.imgs = []
+        print("image_file:", img_file)
         with open(img_file, 'r', encoding='utf-8') as fd:
             for i, _line in enumerate(fd.readlines()):
                 infos = _line.replace('\n', '').split('\t')

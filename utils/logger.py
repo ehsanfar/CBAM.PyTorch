@@ -9,6 +9,8 @@ class Logger(object):
     def __init__(self, fpath,resume=False): 
         self.file = None
         self.resume = resume
+        print(fpath)
+        print(os.getcwd())
         if os.path.isfile(fpath):
             if resume:
                 self.file = open(fpath, 'a') 
