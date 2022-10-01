@@ -14,8 +14,17 @@ from PIL import Image
 from torchnet.meter import ClassErrorMeter
 from tensorboardX import SummaryWriter
 import torch.backends.cudnn as cudnn
+import gc
+
+state_dict = is_use_cuda = train_dataloaders = None 
+val_dataloaders = loss_fn = optimizer = lr_schedule = None
+
+gc.collect()
+torch.cuda.empty_cache()
+
 
 def load_state_dict(model_dir, is_multi_gpu):
+    
     state_dict = torch.load(model_dir, map_location=lambda storage, loc: storage)['state_dict']
     if is_multi_gpu:
         new_state_dict = OrderedDict()
@@ -33,7 +42,8 @@ def main(args):
         logger = Logger('./logs/'+args.model+'.log', True)
 
     logger.append(vars(args))
-
+    
+    print(args.display)
     if args.display:
         writer = SummaryWriter()
     else:
@@ -62,16 +72,17 @@ def main(args):
     train_dataloaders = torch.utils.data.DataLoader(train_datasets, batch_size=args.batch_size*len(gpus), shuffle=True, num_workers=8)
     val_dataloaders   = torch.utils.data.DataLoader(val_datasets, batch_size=1024, shuffle=False, num_workers=8)
 
-    if args.debug:
+    if True:#args.debug:
         x, y =next(iter(train_dataloaders))
         print(y)
-        logger.append([x, y])
+        print(x.shape)
+#         logger.append([x, y])
 
     os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
     is_use_cuda = torch.cuda.is_available()
     print("is_use_cuda:", is_use_cuda)
     cudnn.benchmark = True
-
+    my_model = None
     if  'resnet50' == args.model.split('_')[0]:
         my_model = models.resnet50(pretrained=False)
     elif 'resnet50-cbam' == args.model.split('_')[0]:
@@ -110,18 +121,25 @@ if __name__ == '__main__':
                         help='trainer debug flag')
     parser.add_argument('-g', '--gpu', default='0', type=str,
                         help='GPU ID Select')                    
-    parser.add_argument('-d', '--data_root', default='./datasets',
+    parser.add_argument('-d', '--data_root', default='/home/etanfar/Documents/MARKET/github-repositories/CBAM-datasets',
                          type=str, help='data root')
-    parser.add_argument('-t', '--train_file', default='./datasets/train.txt',
+    parser.add_argument('-t', '--train_file', default='/home/etanfar/Documents/MARKET/github-repositories/CBAM-datasets/train.txt',
                          type=str, help='train file')
-    parser.add_argument('-v', '--val_file', default='./datasets/val.txt',
+    parser.add_argument('-v', '--val_file', default='/home/etanfar/Documents/MARKET/github-repositories/CBAM-datasets/val.txt',
                          type=str, help='validation file')
     parser.add_argument('-m', '--model', default='resnet101',
                          type=str, help='model type')
     parser.add_argument('--batch_size', default=12,
                          type=int, help='model train batch size')
-    parser.add_argument('--display', action='store_true', dest='display',
+    parser.add_argument('--display', action='store_true', dest='display', default = False,
                         help='Use TensorboardX to Display')
     args = parser.parse_args()
-
-    main(args)
+    
+    try:
+        main(args)
+    except KeyboardInterrupt:
+        del state_dict, is_use_cuda, train_dataloaders, val_dataloaders, my_model, 
+        del my_trainer, loss_fn, optimizer, lr_schedul
+        gc.collect()
+        torch.cuda.empty_cache()
+        

@@ -90,8 +90,9 @@ class Trainer():
                     print_str += '@Top-1 Score: %.4f\t' % (top1_acc_score)
                     print_str += '@Top-5 Score: %.4f\t' % (top5_acc_score)
                 self.logger.append(print_str)
-
-        self.writer.add_scalar('loss/loss_c', batch_mean_loss, self.cur_epoch)
+        
+        if self.writer:
+            self.writer.add_scalar('loss/loss_c', batch_mean_loss, self.cur_epoch)
 
     def _valid(self):
         self.model.eval()
